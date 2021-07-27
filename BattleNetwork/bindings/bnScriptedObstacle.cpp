@@ -3,103 +3,105 @@
 #include "../bnDefenseObstacleBody.h"
 
 ScriptedObstacle::ScriptedObstacle(Team _team) :
-  Obstacle(_team) {
-  setScale(2.f, 2.f);
+    Obstacle(_team) {
+    setScale(2.f, 2.f);
 
-  shadow = new SpriteProxyNode();
-  shadow->setTexture(LOAD_TEXTURE(MISC_SHADOW));
-  shadow->SetLayer(1);
-  shadow->Hide(); // default: hidden
-  AddNode(shadow);
+    shadow = new SpriteProxyNode();
+    shadow->setTexture(LOAD_TEXTURE(MISC_SHADOW));
+    shadow->SetLayer(1);
+    shadow->Hide(); // default: hidden
+    shadow->setOrigin(shadow->getSprite().getLocalBounds().width * 0.5, shadow->getSprite().getLocalBounds().height * 0.5);
+    AddNode(shadow);
 
-  animComponent = CreateComponent<AnimationComponent>(this);
+    animComponent = CreateComponent<AnimationComponent>(this);
 
-  obstacleBody = new DefenseObstacleBody();
-  this->AddDefenseRule(obstacleBody);
+    obstacleBody = new DefenseObstacleBody();
+    this->AddDefenseRule(obstacleBody);
 }
 
 ScriptedObstacle::~ScriptedObstacle() {
-  delete shadow;
-  delete obstacleBody;
+    delete shadow;
+    delete obstacleBody;
 }
 
-bool ScriptedObstacle::CanMoveTo(Battle::Tile * next)
+bool ScriptedObstacle::CanMoveTo(Battle::Tile* next)
 {
-  return canMoveToCallback? canMoveToCallback(*next) : false;
+    return canMoveToCallback ? canMoveToCallback(*next) : false;
 }
 
 void ScriptedObstacle::OnCollision(const Character* other)
 {
-  ScriptedObstacle& so = *this;
-  collisionCallback ? collisionCallback(so, const_cast<Character&>(*other)) : (void)0;
+    ScriptedObstacle& so = *this;
+    collisionCallback ? collisionCallback(so, const_cast<Character&>(*other)) : (void)0;
 }
 
 void ScriptedObstacle::OnUpdate(double _elapsed) {
-  setPosition(tile->getPosition().x + Entity::tileOffset.x + ScriptedObstacle::scriptedOffset.x,
-    tile->getPosition().y - this->height + Entity::tileOffset.y + ScriptedObstacle::scriptedOffset.y);
+    setPosition(tile->getPosition().x + Entity::tileOffset.x + ScriptedObstacle::scriptedOffset.x,
+        tile->getPosition().y - this->height + Entity::tileOffset.y + ScriptedObstacle::scriptedOffset.y);
 
-  //shadow->setPosition(0, +GetHeight()); // counter offset the shadow node
-  ScriptedObstacle& so = *this;
-  updateCallback ? updateCallback(so, _elapsed) : (void)0;
+    // counter offset the shadow node
+    shadow->setPosition(0, Entity::GetCurrJumpHeight() / 2);
+    ScriptedObstacle& so = *this;
+    updateCallback ? updateCallback(so, _elapsed) : (void)0;
 
 }
 
 void ScriptedObstacle::OnDelete() {
-  ScriptedObstacle& so = *this;
-  deleteCallback ? deleteCallback(so) : (void)0;
-  Remove();
+    ScriptedObstacle& so = *this;
+    deleteCallback ? deleteCallback(so) : (void)0;
+    Remove();
 }
 
 void ScriptedObstacle::Attack(Character* other) {
-  other->Hit(GetHitboxProperties());
-  ScriptedObstacle& so = *this;
-  attackCallback ? attackCallback(so, *other) : (void)0;
+    other->Hit(GetHitboxProperties());
+    ScriptedObstacle& so = *this;
+    attackCallback ? attackCallback(so, *other) : (void)0;
 }
 
 void ScriptedObstacle::OnSpawn(Battle::Tile& spawn)
 {
-  ScriptedObstacle& so = *this;
-  spawnCallback ? spawnCallback(so, spawn) : (void)0;
+    ScriptedObstacle& so = *this;
+    spawnCallback ? spawnCallback(so, spawn) : (void)0;
 }
 
 const float ScriptedObstacle::GetHeight() const
 {
-  return height;
+    return height;
 }
 
 void ScriptedObstacle::SetHeight(const float height)
 {
-  this->height = height;
+    this->height = height;
 }
 
 void ScriptedObstacle::ShowShadow(const bool show)
 {
-  if (!show) {
-    this->shadow->Hide();
-  }
-  else {
-    this->shadow->Reveal();
-  }
+    if (!show) {
+        this->shadow->Hide();
+    }
+    else {
+        this->shadow->Reveal();
+    }
 }
 
 Animation& ScriptedObstacle::GetAnimationObject()
 {
-  return animComponent->GetAnimationObject();
+    return animComponent->GetAnimationObject();
 }
 
 const sf::Vector2f& ScriptedObstacle::GetTileOffset() const
 {
-  return ScriptedObstacle::scriptedOffset;
+    return ScriptedObstacle::scriptedOffset;
 }
 
 void ScriptedObstacle::SetTileOffset(float x, float y)
 {
-  ScriptedObstacle::scriptedOffset = { x, y };
+    ScriptedObstacle::scriptedOffset = { x, y };
 }
 
 Battle::Tile* ScriptedObstacle::GetCurrentTile() const
 {
-  return GetTile();
+    return GetTile();
 }
 
 void ScriptedObstacle::ShakeCamera(double power, float duration)
